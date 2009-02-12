@@ -1,0 +1,75 @@
+Audio-ScratchLive
+==============
+
+#
+# Audio::ScratchLive Perl Module
+# Author: Chase Whitener <cwhitener at gmail dot com>
+# Last Updated - Feb 12, 2009
+#
+
+The following Perl module is to facilitate crate and database management with
+the Scratch LIVE application from Serato.  http://www.scratchlive.net
+
+Note - This module is in no way official from Rane/Serato.  There are bound to
+be some issues, so please make a backup of all crates and databases before
+attempting anything with this module.
+
+There is a functioning Java application called ScratchTools to aid with crate
+management as well.  http://www.scratchtools.de
+
+HISTORY
+
+I am a DJ as well as a programmer.  I use Scratch LIVE now as it has become
+ubiquitous in the DJ circle.  I have noticed that maintaining crates can get
+quite cumbersome, especially when you have multiple thousands of tracks to deal
+with.  Hell, just try to change the location of a track!
+
+For that reason, this module was born.
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+    - To use the module afterwards, you'll need to do this:
+        use Audio::ScratchLive;
+
+INSTALLATION - alternate
+
+To install this module to a different path:
+
+   perl Makefile.PL PREFIX=/path/to/some/dir
+   make
+   make test
+   make install
+
+    - To use the module afterwards, you'll need to to this:
+        use lib '/path/to/some/dir';
+        use Audio::ScratchLive;
+
+DEPENDENCIES
+
+This module requires these other modules and libraries:
+
+  Carp
+  File::Spec
+
+WHAT WORKS
+
+Reading crate and database information.
+
+WHAT DOESN'T WORK (a.k.a. TO DO)
+
+* Figuring out exactly what all of the unknown fields are.
+* Some more crate reading stuff.
+* Being able to write altered crate and DB files.
+
+ABOUT THE AUTHOR
+
+Chase Whitener cwhitener at gmail dot com
+genio on EFNET #perl
+
