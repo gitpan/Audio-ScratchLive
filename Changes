@@ -1,4 +1,16 @@
 Revision history for Perl extension Audio::ScratchLive
 
+0.02 Tues Feb 24 14:00:00 2009
+    - Added META.yml
+    - Fixed Solaris flock() problem (Thanks q[Caelum])
+    - Added method to get to tracks array
+    - Added some documentation
+    - Fixed some documentation errors
+    - Fixed some tab vs spaces issues (stupid me and stupid editors)
+    - Split up test files (one for DB, one for crate)
+    - Removed a sub-crate file (same as crate file, really)
+    - Cleaned up the test files
+    - Added more tests
+
 0.01 Thurs Feb 12 12:00:00 2009
     - Initial release

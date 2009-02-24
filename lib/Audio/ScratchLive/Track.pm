@@ -9,91 +9,91 @@ package Audio::ScratchLive::Track;
     use vars qw( @ISA $VERSION @EXPORT @EXPORT_OK );
     
     @ISA = qw( Exporter );
-    $VERSION = '0.01';
+    $VERSION = '0.02';
     
-	#**************************************************************************
-	# new( %hash )
-	#	-- CONSTRUCTOR
-	#**************************************************************************
+    #**************************************************************************
+    # new( %hash )
+    #    -- CONSTRUCTOR
+    #**************************************************************************
     sub new {
         my ( $class, %args ) = @_;
-		my $buffer = '';
-		my $empty = 0;
-		my $type = -1;
-		$type = $args{'type'}
-			if exists($args{type}) and defined($args{type});
-		$buffer = $args{'buffer'}
-			if exists($args{'buffer'}) and defined($args{'buffer'});
-		$empty = $args{'empty'}
-			if exists($args{'empty'}) and defined($args{'empty'});
-		$type = Audio::ScratchLive::Constants::DB
-			unless ( $type == Audio::ScratchLive::Constants::CRATE );
-			
-		unless ( $empty or length($buffer) ) {
-			carp( "Hash key 'empty' or 'buffer' required! $!" );
+        my $buffer = '';
+        my $empty = 0;
+        my $type = -1;
+        $type = $args{'type'}
+            if exists($args{type}) and defined($args{type});
+        $buffer = $args{'buffer'}
+            if exists($args{'buffer'}) and defined($args{'buffer'});
+        $empty = $args{'empty'}
+            if exists($args{'empty'}) and defined($args{'empty'});
+        $type = Audio::ScratchLive::Constants::DB
+            unless ( $type == Audio::ScratchLive::Constants::CRATE );
+            
+        unless ( $empty or length($buffer) ) {
+            carp( "Hash key 'empty' or 'buffer' required! $!" );
             return 0;
         }
         my $self = {
             _fields => {},
-			_type => $type,
+            _type => $type,
         };
         unless( bless $self, $class ) {
             carp( "Trouble creating new Audio::ScratchLive::Track object" );
             return 0;
         }
-		$self->create_empty();
-		unless ( $empty ) {
-			unless ( $self->parse_buffer( $buffer ) ) {
-				carp( "Error parsing buffer: $!" );
-				return 0;
-			}
-		}
+        $self->create_empty();
+        unless ( $empty ) {
+            unless ( $self->parse_buffer( $buffer ) ) {
+                carp( "Error parsing buffer: $!" );
+                return 0;
+            }
+        }
         return $self;
     }
-	
-	#**************************************************************************
-	# create_empty()
-	#	-- creates a default track object based on the Constants.pm
-	#**************************************************************************
-	sub create_empty {
-		my $self = shift;
-		my $aref = Audio::ScratchLive::Constants->track_keys($self->{_type});
-		for my $key (@{$aref}) {
-			$self->{_fields}->{$key} =
-				Audio::ScratchLive::Constants->track_default( $key, $self->{_type});
-		}
-		return 1;
-	}
-	
-	#**************************************************************************
-	# get_keys()
-	#	-- returns a sorted list of the keys for this track
-	#**************************************************************************
-	sub get_keys {
-		my $self = shift;
-		my @array = sort keys %{$self->{_fields}};
-		return \@array;
-	}
+    
+    #**************************************************************************
+    # create_empty()
+    #    -- creates a default track object based on the Constants.pm
+    #**************************************************************************
+    sub create_empty {
+        my $self = shift;
+        my $aref = Audio::ScratchLive::Constants->track_keys($self->{_type});
+        for my $key (@{$aref}) {
+            $self->{_fields}->{$key} =
+                Audio::ScratchLive::Constants->track_default( $key, $self->{_type});
+        }
+        return 1;
+    }
+    
+    #**************************************************************************
+    # get_keys()
+    #    -- returns a sorted list of the keys for this track
+    #**************************************************************************
+    sub get_keys {
+        my $self = shift;
+        my @array = sort keys %{$self->{_fields}};
+        return \@array;
+    }
 
-	#**************************************************************************
-	# get_value( $key )
-	#	-- looks at one of the track's keys and returns its value
-	#**************************************************************************
-	sub get_value {
-		my ( $self, $fld ) = @_;
-		$fld = '' unless defined($fld) and length($fld);
-		$fld = lc($fld);
-		if ( exists($self->{_fields}->{$fld}) and defined($self->{_fields}->{$fld}) ) {
-			return $self->{_fields}->{$fld};
-		}
-		warn( "No field called $fld for this track." );
-		return '';
-	}	
+    #**************************************************************************
+    # get_value( $key )
+    #    -- looks at one of the track's keys and returns its value
+    #**************************************************************************
+    sub get_value {
+        my ( $self, $fld ) = @_;
+        $fld = '' unless defined($fld) and length($fld);
+        $fld = lc($fld);
+        if ( exists($self->{_fields}->{$fld}) and defined($self->{_fields}->{$fld}) ) {
+            return $self->{_fields}->{$fld};
+        }
+        warn( "No field called $fld for this track." );
+        return '';
+    }    
 
-	#**************************************************************************
-	# parse_buffer( $buffer )
-	#	-- takes the binary data from the file and builds a track object
-	#**************************************************************************
+    #**************************************************************************
+    # parse_buffer( $buffer )
+    #    -- takes the binary data from the file and builds a track object
+    #**************************************************************************
     sub parse_buffer {
         my ( $self, $buffer ) = @_;
         unless ( defined($buffer) && length($buffer) ) {
@@ -106,7 +106,7 @@ package Audio::ScratchLive::Track;
             #now we need the length in bytes of the value
             my $len = unpack('N',substr($buffer,0,4,''));
             my $val = '';
-			my $type = Audio::ScratchLive::Constants->track_type($key, $self->{_type});
+            my $type = Audio::ScratchLive::Constants->track_type($key, $self->{_type});
             if ( $type eq 'string' ) {
                 $val .= sprintf( '%c', $_ )
                     for unpack('n*',substr($buffer,0,$len,''));
@@ -120,21 +120,21 @@ package Audio::ScratchLive::Track;
             elsif ( $type eq 'int(4)' ) {
                 $val = unpack('N',substr($buffer,0,$len,''));
             }
-			else {
-				carp( "Unknown type: $!" );
-				return 0;
+            else {
+                carp( "Unknown type: $!" );
+                return 0;
             }
             $self->{_fields}->{$key} = $val;
         } 
         return 1;
-    }	
+    }    
 }
 1;
 __END__
 
 =head1 NAME
 
-Audio::ScratchLive::Track v0.01 - Store Track information from a crate/DB file
+Audio::ScratchLive::Track v0.02 - Store Track information from a crate/DB file
 
 =head1 SYNOPSIS
 
@@ -217,7 +217,7 @@ The C<get_value> method returns the value stored for the requested $key.  If it 
 
 =head1 SUPPORT
 
-Please visit EFNet #perl for assistance with this module. genio is the Author.
+Please visit EFNet #perl for assistance with this module. "genio" is the author.
 
 =head1 CAVEATS
 
@@ -238,6 +238,9 @@ Not enough documentation.
     Author's Web site that will eventually contain a cookbook
     L<http://www.cwhitener.org>
     
+    Rane/Serato's ScratchLIVE web site and forums
+    L<http://www.scratchlive.net>
+
     ScratchTools (Java app)
     L<http://www.scratchtools.de>
 

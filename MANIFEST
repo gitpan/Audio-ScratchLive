@@ -1,11 +1,12 @@
 Changes
 Makefile.PL
 MANIFEST
+META.yml
 README
 lib/Audio/ScratchLive.pm
 lib/Audio/ScratchLive/Constants.pm
 lib/Audio/ScratchLive/Track.pm
-t/Audio-ScratchLive.t
+t/01_db.t
+t/02_crate.t
 t/Reggae.crate
-t/Reggaeton_New.crate
-t/Database\ V2
+t/DatabaseV2

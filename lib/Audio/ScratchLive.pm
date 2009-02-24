@@ -11,7 +11,7 @@ package Audio::ScratchLive;
     use Audio::ScratchLive::Track;
     
     use vars qw( $VERSION );
-    $VERSION = '0.01';
+    $VERSION = '0.02';
     
     #**************************************************************************
     # constructor
@@ -22,7 +22,7 @@ package Audio::ScratchLive;
         
         my $self = {
             _version => '',
-			_type => Audio::ScratchLive::Constants::DB,
+            _type => Audio::ScratchLive::Constants::DB,
             _file => '',
             _tracks => [],
         };
@@ -43,29 +43,38 @@ package Audio::ScratchLive;
     # get_num_tracks()
     #   -- returns the number of tracks found in this particular file
     #**************************************************************************
-	sub get_num_tracks {
-		my $self = shift;
-		return scalar(@{$self->{_tracks}});
-	}
+    sub get_num_tracks {
+        my $self = shift;
+        return scalar(@{$self->{_tracks}});
+    }
+
+    #**************************************************************************
+    # get_tracks()
+    #   -- returns a reference to an array of ScratchLive::Track objects
+    #**************************************************************************
+    sub get_tracks {
+        my $self = shift;
+        return $self->{_tracks};
+    }
 
     #**************************************************************************
     # get_type()
     #   -- returns the type (DB/crate)
     #**************************************************************************
-	sub get_type {
-		my $self = shift;
-		return 'crate' if $self->{_type} == Audio::ScratchLive::Constants::CRATE;
-		return 'database';
-	}
+    sub get_type {
+        my $self = shift;
+        return 'crate' if $self->{_type} == Audio::ScratchLive::Constants::CRATE;
+        return 'database';
+    }
 
     #**************************************************************************
     # get_version()
     #   -- returns the version info for the file
     #**************************************************************************
-	sub get_version {
-		my $self = shift;
-		return $self->{_version};
-	}
+    sub get_version {
+        my $self = shift;
+        return $self->{_version};
+    }
 
     #**************************************************************************
     # parse()
@@ -73,9 +82,10 @@ package Audio::ScratchLive;
     #**************************************************************************
     sub parse {
         my $self = shift;
-		
-		#open, lock, set in binmode
-        open( my $fh, '<', $self->{'_file'} )
+        
+        #open, lock, set in binmode
+        #Had to add the +< mode for Solaris.  Thanks q[Caelum]!
+        open( my $fh, '+<', $self->{'_file'} )
             or carp( "Error opening file. $!" ) && return 0;
         flock( $fh, LOCK_EX ) or carp( "Couldn't aquire lock $!" ) && return 0;
         binmode( $fh );
@@ -89,29 +99,29 @@ package Audio::ScratchLive;
         sysread( $fh, my $len, 4 ) or carp("Premature EOF") && return 0;
         sysread( $fh, $buffer, unpack('N',$len)) or carp("Premature EOF") && return 0;
         $self->{'_version'} .= sprintf( '%c', $_ ) for unpack('n*',$buffer);
-		$self->{'_version'} = '' unless $self->{'_version'};
-		if ( $self->{'_version'} !~ /(?:Crate|Database)/ ) {
-			carp( "File's version doesn't look right to me!" );
-			return 0;
-		}
-		$self->{_type} = Audio::ScratchLive::Constants::CRATE
-			if $self->{_version} =~ /Crate/;
+        $self->{'_version'} = '' unless $self->{'_version'};
+        if ( $self->{'_version'} !~ /(?:Crate|Database)/ ) {
+            carp( "File's version doesn't look right to me!" );
+            return 0;
+        }
+        $self->{_type} = Audio::ScratchLive::Constants::CRATE
+            if $self->{_version} =~ /Crate/;
         #now we know if we're dealing with a crate or the DB, get the info
         while ( sysread( $fh, $buffer, 4 ) != 0 ) {
-			sysread( $fh, $len, 4 ) or carp("Premature EOF") && return 0;
-			sysread( $fh, my $val, unpack('N',$len) ) or carp("Premature EOF") && return 0;
+            sysread( $fh, $len, 4 ) or carp("Premature EOF") && return 0;
+            sysread( $fh, my $val, unpack('N',$len) ) or carp("Premature EOF") && return 0;
             if ( $buffer eq 'otrk' ) {
-				##get the length of the track data
-				my $track = Audio::ScratchLive::Track->new(
-					'buffer' => $val,
-					'type' => $self->{_type}
-				);
-				unless ( $track ) {
-					carp( "Error creating new track record. $!" );
-					return 0;
-				}
-				push @{$self->{'_tracks'}}, $track;
-			}
+                ##get the length of the track data
+                my $track = Audio::ScratchLive::Track->new(
+                    'buffer' => $val,
+                    'type' => $self->{_type}
+                );
+                unless ( $track ) {
+                    carp( "Error creating new track record. $!" );
+                    return 0;
+                }
+                push @{$self->{'_tracks'}}, $track;
+            }
             
         }
         return 1;
@@ -150,7 +160,7 @@ __END__
 
 =head1 NAME
 
-Audio::ScratchLive v0.01 - this class provides simple way to read/write ScratchLive crates and databases
+Audio::ScratchLive v0.02 - this class provides simple way to read/write ScratchLIVE crates and databases
 
 =head1 SYNOPSIS
 
@@ -160,7 +170,7 @@ Audio::ScratchLive v0.01 - this class provides simple way to read/write ScratchL
 
 =head1 DESCRIPTION
 
-This class provides a way to open and parse Scratch LIVE's binary crate and database files.
+This class provides a way to open and parse ScratchLIVE's binary crate and database files.
 
 =head2 METHODS
 
@@ -188,17 +198,17 @@ The C<parse> method reads through the file you provided, getting the header and 
 
 =back
 
-=item get_version()
+=item get_num_tracks()
 
-Returns the string version of the database or crate file you provided after using C<parse>
+Returns the number of tracks found in the file you provided after using C<parse>
 
 =over
 
 =back
 
-=item get_num_tracks()
+=item get_tracks()
 
-Returns the number of tracks found in the file you provided after using C<parse>
+Returns a reference to an array of Audio::ScratchLive::Track objects. Provided after using C<parse>
 
 =over
 
@@ -211,6 +221,16 @@ After running C<parse>, this will tell you whether you provided a 'crate' or a '
 =over 
 
 =back
+
+=item get_version()
+
+Returns the string version of the database or crate file you provided after using C<parse>
+
+=over
+
+=back
+
+
 
 =item set_filename( $path )
 
@@ -237,11 +257,10 @@ Provides a way to clear any parsed information and setup the object again like n
     
     print "Found ", $sl->get_num_tracks(), " tracks\n";
     
-    #this part is actually a no-no. I will provide a method for this later
-    #we are peeking into the Audio::ScratchLive object to steal the tracks
     #each track is an Audio::ScratchLive::Track object
     my $count = 0;
-    for my $track ( @{$sl->{_tracks}} ) {
+    my $a_tracks = $sl->get_tracks();
+    for my $track ( @{$a_tracks} ) {
         print "Info for track ", ++$count, "\n";
         my $a_keys = $track->get_keys();
         for my $key ( @{$a_keys} ) {
@@ -252,7 +271,7 @@ Provides a way to clear any parsed information and setup the object again like n
 
 =head1 SUPPORT
 
-Please visit EFNet #perl for assistance with this module. genio is the Author.
+Please visit EFNet #perl for assistance with this module. "genio" is the author.
 
 =head1 CAVEATS
 
@@ -275,6 +294,9 @@ Not enough documentation.
     Author's Web site that will eventually contain a cookbook
     L<http://www.cwhitener.org>
     
+    Rane/Serato's ScratchLIVE web site (with forums)
+    L<http://www.scratchlive.net>
+
     ScratchTools (Java app)
     L<http://www.scratchtools.de>
 
@@ -282,6 +304,10 @@ Not enough documentation.
 =head1 AUTHORS
 
 Chase Whitener <cwhitener at gmail dot com>
+
+Thanks to:
+
+q[Caelum] (EFNet #perl) - Finding and fixing the Solaris problem.
 
 =head1 COPYRIGHT
 
