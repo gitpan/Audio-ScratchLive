@@ -11,7 +11,7 @@ package Audio::ScratchLive;
     use Audio::ScratchLive::Track;
     
     use vars qw( $VERSION );
-    $VERSION = '0.02';
+    $VERSION = '0.03';
     
     #**************************************************************************
     # constructor
@@ -22,6 +22,7 @@ package Audio::ScratchLive;
         
         my $self = {
             _version => '',
+            _header => {},
             _type => Audio::ScratchLive::Constants::DB,
             _file => '',
             _tracks => [],
@@ -39,6 +40,15 @@ package Audio::ScratchLive;
         return $self;
     }
     
+    #**************************************************************************
+    # get_headers()
+    #   -- returns the header info in this particular file
+    #**************************************************************************
+    sub get_headers {
+        my $self = shift;
+        return $self->{_header};
+    }
+
     #**************************************************************************
     # get_num_tracks()
     #   -- returns the number of tracks found in this particular file
@@ -122,8 +132,62 @@ package Audio::ScratchLive;
                 }
                 push @{$self->{'_tracks'}}, $track;
             }
-            
+            elsif ( $buffer eq 'osrt' or $buffer eq 'ovct' ) {
+                unless ( $self->parse_crate_info( $buffer, $val ) ) {
+                    carp( "Error parsing osrt info: $!" );
+                    return 0;
+                }
+            }
+            else {
+                die( "buffer: $buffer ");
+            }
         }
+        return 1;
+    }
+
+    #**************************************************************************
+    # parse_crate_info( $key, $buffer )
+    #   -- parse some of the crate header information...
+    #**************************************************************************
+    sub parse_crate_info {
+        my ( $self, $key, $buffer ) = @_;
+        $key = lc(_trim($key));
+        unless ( length($key) == 4 ) {
+            carp("Invalid key: $key for crate header info");
+            return 0;
+        }
+        unless( defined($buffer) and length($buffer) ) {
+            carp( "Value buffer has no size" );
+            return 0;
+        }
+        my $href = {};
+        while ( length($buffer) > 4 ) {
+            #get the key
+            my $k = substr( $buffer, 0, 4, '' );
+            #now we need the length in bytes of the value
+            my $len = unpack('N',substr($buffer,0,4,''));
+            my $val = '';
+            my $type = Audio::ScratchLive::Constants->header_type($k, $self->{_type});
+            if ( $type eq 'string' ) {
+                $val .= sprintf( '%c', $_ )
+                    for unpack('n*',substr($buffer,0,$len,''));
+            }
+            elsif ( $type eq 'int(1)' ) {
+                $val = ord(substr($buffer,0,$len,''));
+            }
+            elsif ( $type eq 'char' ) {
+                $val = sprintf('%c',unpack('n',substr($buffer,0,$len,'')) );
+            }
+            elsif ( $type eq 'int(4)' ) {
+                $val = unpack('N',substr($buffer,0,$len,''));
+            }
+            else {
+                carp( "Unknown type:\n $!" );
+                return 0;
+            }
+            $href->{$k} = $val;
+        }
+        $self->{'_header'}->{$key} = $href;
         return 1;
     }
 
@@ -153,6 +217,17 @@ package Audio::ScratchLive;
         return 1;
     }
 
+    #**************************************************************************
+    #  _trim( $input )
+    #   -- trims the beginning and trailing spaces
+    #**************************************************************************
+    sub _trim {
+        my $input = shift;
+        return '' unless defined($input) and length($input);
+        $input =~ s/^\s+//;
+        $input =~ s/\s+$//;
+        return $input;
+    }
 
 }
 1;
@@ -160,7 +235,7 @@ __END__
 
 =head1 NAME
 
-Audio::ScratchLive v0.02 - this class provides simple way to read/write ScratchLIVE crates and databases
+Audio::ScratchLive - Simple way to read/write ScratchLIVE crates and databases
 
 =head1 SYNOPSIS
 
@@ -193,6 +268,14 @@ The path to a crate or database file
 =item parse()
 
 The C<parse> method reads through the file you provided, getting the header and track information. 1 on success, 0 otherwise. $! is set containing any error messages.
+
+=over
+
+=back
+
+=item get_headers()
+
+Returns the header info (hash-ref) found in the file you provided after using C<parse>
 
 =over
 

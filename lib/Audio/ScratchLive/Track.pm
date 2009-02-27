@@ -9,7 +9,7 @@ package Audio::ScratchLive::Track;
     use vars qw( @ISA $VERSION @EXPORT @EXPORT_OK );
     
     @ISA = qw( Exporter );
-    $VERSION = '0.02';
+    $VERSION = '0.03';
     
     #**************************************************************************
     # new( %hash )
@@ -134,7 +134,7 @@ __END__
 
 =head1 NAME
 
-Audio::ScratchLive::Track v0.02 - Store Track information from a crate/DB file
+Audio::ScratchLive::Track - Store Track information from a crate/DB file
 
 =head1 SYNOPSIS
 
@@ -168,7 +168,7 @@ Audio::ScratchLive::Track v0.02 - Store Track information from a crate/DB file
 
 =head1 DESCRIPTION
 
-This class provides a way to store track information from Scratch LIVE's binary crate and database files.
+This class provides a way to store track information from ScratchLIVE's binary crate and database files.
 
 =head2 METHODS
 

@@ -1,5 +1,14 @@
 Revision history for Perl extension Audio::ScratchLive
 
+0.03 Fri Feb 27 14:00:00 2009
+    - Added the headers from crate files into the Constants
+    - Added functions to get header defaults and types into the Constants
+    - Added some documentation and fixed other mistakes in the docs
+    - Fixed a version number mishap on the Constants
+    - Fixed the META.yml problem
+    - Added the parsing of the header info when using ->parse()
+    - Provided a way to get that header info back with ->get_headers()
+
 0.02 Tues Feb 24 14:00:00 2009
     - Added META.yml
     - Fixed Solaris flock() problem (Thanks q[Caelum])

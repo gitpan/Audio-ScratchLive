@@ -7,11 +7,19 @@
     use constant CRATE => 1;
 
     BEGIN {
-        use vars qw( %VRSN %TRACK $VERSION );
-        $VERSION = '0.1';
+        use vars qw( %VRSN %HEADER %TRACK $VERSION );
+        $VERSION = '0.03';
         %VRSN = (
             CRATE => '1.0/Serato ScratchLive Crate',
             DB => '2.0/Serato Scratch LIVE Database',
+        );
+        %HEADER = (
+            CRATE => {
+                tvcn => {type => 'string', description => '', default => 'song',},
+                brev => {type => 'int(1)', description => '', default => 1,},
+                tvcw => {type => 'char', description => '', default => ' ',},
+            },
+            DB => {},
         );
         %TRACK = (
             CRATE => {
@@ -57,6 +65,49 @@
         );
     }
 
+    sub header_default {
+        my ($class, $key, $type) = @_;
+        $key = '' unless defined($key) and length($key);
+        $type = -1 unless defined($type) and length($type);
+        $key = lc($key);
+        $type = ($type == CRATE)? 'CRATE': 'DB';
+        if ( exists($HEADER{$type}->{$key}->{'default'}) and defined($HEADER{$type}->{$key}->{'default'}) ) {
+            return $HEADER{$type}->{$key}->{'default'};
+        }
+        carp( "Error, no such $key.  Notify author or add to Constants.pm" );
+        return 0;
+    }
+    sub header_description {
+        my ($class, $key, $type) = @_;
+        $type = -1 unless defined($type) and length($type);
+        $key = '' unless defined($key) and length($key);
+        $type = ($type == CRATE)? 'CRATE': 'DB';
+        $key = lc($key);
+        if ( exists($HEADER{$type}->{$key}->{'description'}) and defined($HEADER{$type}->{$key}->{'description'}) ) {
+            return $HEADER{$type}->{$key}->{'description'};
+        }
+        carp( "Error, no such $key.  Notify author or add to Constants.pm" );
+        return 0;
+    }
+    sub header_keys {
+        my ($class, $type) = @_;
+        $type = -1 unless defined($type) and length($type);
+        $type = ($type == CRATE)? 'CRATE': 'DB';
+        my @array = sort keys %{$HEADER{$type}};
+        return \@array;
+    }
+    sub header_type {
+        my ($class, $key, $type) = @_;
+        $key = '' unless defined($key) and length($key);
+        $type = -1 unless defined($type) and length($type);
+        $key = lc($key);
+        $type = ($type == CRATE)? 'CRATE': 'DB';
+        if ( exists($HEADER{$type}->{$key}->{'type'}) and defined($HEADER{$type}->{$key}->{'type'}) ) {
+            return $HEADER{$type}->{$key}->{'type'};
+        }
+        carp( "Error, no such $key. Notify author or add to Constants.pm" );
+        return 0;
+    }
     sub track_default {
         my ($class, $key, $type) = @_;
         $key = '' unless defined($key) and length($key);
@@ -115,7 +166,7 @@ __END__
 
 =head1 NAME
 
-Audio::ScratchLive::Constants v0.02 - Some information needed by the Audio::ScratchLive module
+Audio::ScratchLive::Constants - Some information needed by the Audio::ScratchLive module
 
 =head1 SYNOPSIS
 
@@ -125,9 +176,13 @@ Audio::ScratchLive::Constants v0.02 - Some information needed by the Audio::Scra
     Audio::ScratchLive::Constants::DB
     Audio::ScratchLive::Constants::CRATE
 
-    Since there are two types of files ScratchLIVE creates for their database of information, we need to know which one we're dealing with.  This helps us resolve that issue.
+    Since there are two types of files ScratchLIVE creates for their database of
+    information, we need to know which one we're dealing with. 
+    This helps us resolve that issue.
 
-    Each type of database has its own information that gets stored that the other type does not.  To find out what should be getting stored in each of these types of database, we use the accessors available below.
+    Each type of database has its own information that gets stored that the other
+    type does not.  To find out what should be getting stored in each of these
+    types of database, we use the accessors available below.
 
 =head1 DESCRIPTION
 
@@ -136,6 +191,66 @@ This library provides some constants and some accessor subroutines needed for al
 =head2 METHODS
 
 =over 
+
+=item header_default( $key, $type )
+
+The C<header_default> function returns a scalar value representing what I've found to be a default value for the key->value pairs supplied at the beginning of some database files.  Upon error it warns and returns 0.
+
+=over
+
+=item key
+
+Defaults to ''.  Looks in the constants for the key matching the SCALAR you provided here and returns its default value.
+
+=item type
+
+This tells us what type of DB we're dealing with.  Since the key->value pairs are different for each type, we need to know what type we're dealing with: Audio::ScratchLive::Constants::DB or Audio::ScratchLive::Constants::CRATE. DB is default
+
+=back
+
+=item header_description( $key, $type )
+
+The C<header_description> subroutine returns a scalar string value describing what the value of the key->value pair contains in human words.  A lot of the key->value pairs don't have descriptions because I haven't yet found out what they're for.  I will take all corrections and additions on this. Upon error, it warns and returns 0.
+
+=over
+
+=item key
+
+Defaults to ''.  This is the key of the key->value pair you want a description for.
+
+=item type
+
+Defaults to Audio::ScratchLive::Constants::DB.  The other acceptable value is Audio::ScratchLive::Constants::CRATE
+ 
+=back
+
+=item header_keys( $type )
+
+The C<header_keys> method returns a sorted reference to an array of the header field keys for this type of DB.  You can then go through the keys and request the value for that given key.
+
+=over
+
+=item type
+
+Audio::ScratchLive::Constants::DB is default. Audio::ScratchLive::Constants::CRATE is the other choice
+
+=back
+
+=item header_type( $key, $type )
+
+the C<header_type> method tells you the data type of the value for the given key->value pair.  B<char>, B<int(4)>, B<int(1)>, and B<string> are the possible types returned.  Upon error, it warns and returns 0.
+
+=over
+
+=item key
+
+Defaults to ''.  This is the key of the key->value pair you want a data-type for.
+
+=item type
+
+Defaults to Audio::ScratchLive::Constants::DB.  The other acceptable value is Audio::ScratchLive::Constants::CRATE
+
+=back
 
 =item track_default( $key, $type )
 
