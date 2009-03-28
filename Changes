@@ -1,5 +1,11 @@
 Revision history for Perl extension Audio::ScratchLive
 
+0.04 Sat Mar 28 05:00:00 2009
+    - Started using File::Slurp
+    - Took away the requirement for Perl 5.8 and greater
+    - Fixed a problem with the crate file headers
+    - Edited the test files to utilize File::Slurp instead
+    
 0.03 Fri Feb 27 14:00:00 2009
     - Added the headers from crate files into the Constants
     - Added functions to get header defaults and types into the Constants

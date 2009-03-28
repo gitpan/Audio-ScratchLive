@@ -1,22 +1,16 @@
 --- #YAML:1.0
-name:               Audio-ScratchLive
-version:            0.03
-abstract:           Simple way to read/write ScratchLIVE crates and databases
-author:
+name:                Audio-ScratchLive
+version:             0.04
+abstract:            Simple way to read/write ScratchLIVE crates and databases
+license:             perl
+author:              
     - Chase Whitener <cwhitener@gmail.com>
-license:            perl
-distribution_type:  module
-configure_requires:
-    ExtUtils::MakeMaker:  0
-requires:
-    Carp:        1.08
-    Fcntl:       1.06
-    File::Spec:  3.2501
-no_index:
-    directory:
-        - t
-        - inc
-generated_by:       ExtUtils::MakeMaker version 6.48
+generated_by:        ExtUtils::MakeMaker version 6.42
+distribution_type:   module
+requires:     
+    Carp:                          1.08
+    File::Slurp:                   9999.13
+    File::Spec:                    3.2501
 meta-spec:
-    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
-    version:  1.4
+    url:     http://module-build.sourceforge.net/META-spec-v1.3.html
+    version: 1.3

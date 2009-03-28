@@ -6,12 +6,13 @@
 use strict;
 use warnings;
 use UNIVERSAL;
-use Test::More tests => 12;
+use Test::More tests => 13;
 
 #test -- can we find the module?
 
 BEGIN {
     use_ok( 'File::Spec' );
+    use_ok( 'File::Slurp' );
     use_ok( 'Audio::ScratchLive' );
     use_ok( 'Audio::ScratchLive::Track' );
     use_ok( 'Audio::ScratchLive::Constants' );

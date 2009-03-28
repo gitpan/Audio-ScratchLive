@@ -4,7 +4,7 @@ Audio-ScratchLive
 #
 # Audio::ScratchLive Perl Module
 # Author: Chase Whitener <cwhitener at gmail dot com>
-# Last Updated - Feb 12, 2009
+# Last Updated - Mar 28, 2009
 #
 
 The following Perl module is to facilitate crate and database management with
@@ -57,6 +57,7 @@ This module requires these other modules and libraries:
 
   Carp
   File::Spec
+  File::Slurp
 
 WHAT WORKS
 

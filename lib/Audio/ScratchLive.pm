@@ -1,17 +1,16 @@
 package Audio::ScratchLive;
 {
-    use 5.008001;
     use strict;
     use warnings;
     use Carp;
     use File::Spec;
-    use Fcntl ':flock';
+    use File::Slurp;
     
     use Audio::ScratchLive::Constants;
     use Audio::ScratchLive::Track;
     
     use vars qw( $VERSION );
-    $VERSION = '0.03';
+    $VERSION = '0.04';
     
     #**************************************************************************
     # constructor
@@ -22,7 +21,7 @@ package Audio::ScratchLive;
         
         my $self = {
             _version => '',
-            _header => {},
+            _header => [],
             _type => Audio::ScratchLive::Constants::DB,
             _file => '',
             _tracks => [],
@@ -93,34 +92,42 @@ package Audio::ScratchLive;
     sub parse {
         my $self = shift;
         
-        #open, lock, set in binmode
-        #Had to add the +< mode for Solaris.  Thanks q[Caelum]!
-        open( my $fh, '+<', $self->{'_file'} )
-            or carp( "Error opening file. $!" ) && return 0;
-        flock( $fh, LOCK_EX ) or carp( "Couldn't aquire lock $!" ) && return 0;
-        binmode( $fh );
-
+        #slurp the file
+        my $buffer = read_file( $self->{'_file'}, binmode => ':raw' );
+        
+        #what we'll use to store stuff
+        my $key = q(); #store the key of the key->value pairs
+        my $len = 0; #store the length of the value
+        my $val = q(); #store the value of the key->value pairs
+        
         #read the version (first in all files) 4 bytes = 'vrsn'
-        sysread( $fh, my $buffer, 4 ) or carp("Premature EOF") && return 0;
-        if ( lc($buffer) ne 'vrsn' ) {
+        return premature_eof() unless length $buffer >= 4;
+        $key = substr( $buffer, 0, 4, '' );
+        unless ( lc($key) eq 'vrsn' ) {
             carp( "File doesn't start with 'vrsn' are you sure it's a SL file?" );
             return 0;
         }
-        sysread( $fh, my $len, 4 ) or carp("Premature EOF") && return 0;
-        sysread( $fh, $buffer, unpack('N',$len)) or carp("Premature EOF") && return 0;
-        $self->{'_version'} .= sprintf( '%c', $_ ) for unpack('n*',$buffer);
+        return premature_eof() unless length $buffer >= 4;
+        $len = unpack( 'N', substr( $buffer, 0, 4, '' ) );
+        return premature_eof() unless length $buffer >= $len;
+        $val = substr( $buffer, 0, $len, '' );
+        $self->{'_version'} .= sprintf( '%c', $_ ) for unpack( 'n*', $val );
         $self->{'_version'} = '' unless $self->{'_version'};
-        if ( $self->{'_version'} !~ /(?:Crate|Database)/ ) {
+        unless ( $self->{'_version'} =~ /(?:Crate|Database)/ ) {
             carp( "File's version doesn't look right to me!" );
             return 0;
         }
         $self->{_type} = Audio::ScratchLive::Constants::CRATE
             if $self->{_version} =~ /Crate/;
+            
         #now we know if we're dealing with a crate or the DB, get the info
-        while ( sysread( $fh, $buffer, 4 ) != 0 ) {
-            sysread( $fh, $len, 4 ) or carp("Premature EOF") && return 0;
-            sysread( $fh, my $val, unpack('N',$len) ) or carp("Premature EOF") && return 0;
-            if ( $buffer eq 'otrk' ) {
+        while ( length( $buffer ) > 4 ) {
+            $key = substr( $buffer, 0, 4, '' );
+            return premature_eof() unless length $buffer >= 4;
+            $len = unpack( 'N', substr( $buffer, 0, 4, '' ) );
+            return premature_eof() unless length $buffer >= $len;
+            $val = substr( $buffer, 0, $len, '' );
+            if ( $key eq 'otrk' ) {
                 ##get the length of the track data
                 my $track = Audio::ScratchLive::Track->new(
                     'buffer' => $val,
@@ -132,14 +139,15 @@ package Audio::ScratchLive;
                 }
                 push @{$self->{'_tracks'}}, $track;
             }
-            elsif ( $buffer eq 'osrt' or $buffer eq 'ovct' ) {
-                unless ( $self->parse_crate_info( $buffer, $val ) ) {
+            elsif ( $key eq 'osrt' or $key eq 'ovct' ) {
+                unless ( $self->parse_crate_info( $key, $val ) ) {
                     carp( "Error parsing osrt info: $!" );
                     return 0;
                 }
             }
             else {
-                die( "buffer: $buffer ");
+                carp( "unknown key: $key" );
+                return 0;
             }
         }
         return 1;
@@ -160,7 +168,9 @@ package Audio::ScratchLive;
             carp( "Value buffer has no size" );
             return 0;
         }
-        my $href = {};
+        my $href = {
+            $key => {},
+        };
         while ( length($buffer) > 4 ) {
             #get the key
             my $k = substr( $buffer, 0, 4, '' );
@@ -185,12 +195,21 @@ package Audio::ScratchLive;
                 carp( "Unknown type:\n $!" );
                 return 0;
             }
-            $href->{$k} = $val;
+            $href->{$key}->{$k} = $val;
         }
-        $self->{'_header'}->{$key} = $href;
+        push @{$self->{'_header'}}, $href;
         return 1;
     }
 
+    #**************************************************************************
+    # premature_eof()
+    #   -- set a common error and return 0
+    #**************************************************************************
+    sub premature_eof {
+        carp( "We reached the end of the file before we expected. Bad file?" );
+        return 0;
+    }
+    
     #**************************************************************************
     # set_filename( $file )
     #   -- takes in a filename and makes sure it exists. if so, sets it
@@ -275,7 +294,7 @@ The C<parse> method reads through the file you provided, getting the header and 
 
 =item get_headers()
 
-Returns the header info (hash-ref) found in the file you provided after using C<parse>
+Returns the header info (array-ref) found in the file you provided after using C<parse>
 
 =over
 
